@@ -1,0 +1,3 @@
+# Copy this to .env and fill in your values
+FASTF1_CACHE_DIR=./data/raw/fastf1_cache
+APP_PORT=8000

@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local data cache (FastF1 can download hundreds of MB)
+data/raw/
+data/processed/
+data/features/
+
+# Model artefacts (large binaries)
+models/artefacts/*.pkl
+
+# Env
+.env
+
+# VS Code
+.vscode/
