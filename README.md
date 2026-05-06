@@ -30,12 +30,12 @@ drivers
 
 ## Repository structure
 
-data/ Raw and processed datasets
-notebooks/ EDA, feature exploration, model experiments
-src/ Ingestion, feature engineering, model, and API modules
-app/ Front-end templates and static assets
-models/ Saved model artefacts and evaluation metrics
-tests/ Unit and integration tests
+- data/ Raw and processed datasets
+- notebooks/ EDA, feature exploration, model experiments
+- src/ Ingestion, feature engineering, model, and API modules
+- app/ Front-end templates and static assets
+- models/ Saved model artefacts and evaluation metrics
+- tests/ Unit and integration tests
 
 ## Setup
 
