@@ -49,5 +49,5 @@ pip install -r requirements.txt
 
 ## Status
 
-🚧 Completed — Phase 1 (repo & environment setup) 
+🚧 Completed — Phase 1 (Repo & Environment setup) 
 🚧 In development — Phase 2 (Data Ingestion : Collect and Cache the raw data)
