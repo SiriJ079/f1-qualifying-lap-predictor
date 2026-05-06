@@ -50,4 +50,5 @@ pip install -r requirements.txt
 ## Status
 
 - Completed — Phase 1 (Repo & Environment setup) 
-- In development — Phase 2 (Data Ingestion : Collect and Cache the raw data)
+- Completed — Phase 2 (Data Ingestion : Collect and Cache the raw data)
+- In Progress — Phase 3 (EDA : Exploratory Data Analysis)
