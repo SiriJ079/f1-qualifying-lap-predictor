@@ -105,4 +105,4 @@ if __name__ == "__main__":
 
     print(f"\n✅ Done — {len(clean):,} clean laps saved")
     print(f"   Columns: {list(clean.columns)}")
-    print(clean[["Year", "EventName", "Driver", "LapTime_s", "DeltaToSessionFastest_s", "TrackTemp"]].head(10))
+    print(clean[["Year", "EventName", "Driver", "LapTime_s", "DeltaToSessionFastest_s", "TrackTemp"]].tail(10))

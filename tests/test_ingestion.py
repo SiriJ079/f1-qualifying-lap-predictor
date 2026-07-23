@@ -42,3 +42,27 @@ def test_no_invalid_compounds():
     df = pd.read_parquet(path)
     valid = {"SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"}
     assert set(df["Compound"].unique()).issubset(valid), "Invalid compound types found"
+
+def test_feature_file_exists():
+    path = Path("data/features/qualifying_features.parquet")
+    assert path.exists(), "Feature parquet not found — run build_features.py first"
+
+
+def test_no_target_leakage():
+    path = Path("data/features/qualifying_features.parquet")
+    if not path.exists():
+        return
+    df = pd.read_parquet(path)
+    leakage_cols = [c for c in df.columns if "LapTime" in c or "SessionFastest" in c]
+    assert len(leakage_cols) == 0, f"Potential leakage columns found: {leakage_cols}"
+
+
+def test_rolling_features_are_lagged():
+    path = Path("data/features/qualifying_features.parquet")
+    if not path.exists():
+        return
+    df = pd.read_parquet(path)
+    # First session for any driver should have NaN rolling delta (nothing to roll over)
+    first_appearances = df.groupby("Driver").head(1)
+    assert first_appearances["DriverRollingDelta_3"].isna().any(), \
+        "Rolling features not properly lagged — first rows should be NaN"

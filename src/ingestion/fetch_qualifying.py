@@ -17,7 +17,7 @@ def fetch_qualifying_session(year: int, round_number: int) -> pd.DataFrame | Non
     """Download one qualifying session and return it as a DataFrame."""
     try:
         session = fastf1.get_session(year, round_number, "Q")
-        session.load(telemetry=False, weather=True, messages=False)
+        session.load(telemetry=False, weather=True, messages=True)
 
         laps = session.laps.copy()
         laps["Year"] = year
