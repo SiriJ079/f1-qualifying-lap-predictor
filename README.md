@@ -52,4 +52,5 @@ pip install -r requirements.txt
 - Completed — Phase 1 (Repo & Environment setup) 
 - Completed — Phase 2 (Data Ingestion : Collect and Cache the raw data)
 - Completed — Phase 3 (EDA : Exploratory Data Analysis)
-- In Progress — Phase 4 (Feature Engineering : Prepping (transforming) data to be ready for an ML Model) 
+- Completed — Phase 4 (Feature Engineering : Prepping (transforming) data to be ready for an ML Model) 
+- Completed — Phase 5 (Baseline models (driver rolling, circuit history, team median) with evaluation framework) 
