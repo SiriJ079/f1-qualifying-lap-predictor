@@ -112,18 +112,18 @@ def add_circuit_history_features(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── 5. Season context features ────────────────────────────────────────────────
 
-def add_season_context_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Where in the season this round falls — early vs late development."""
-    season_length = df.groupby("Year")["RoundNumber"].transform("max")
-    df["SeasonProgress"] = df["RoundNumber"] / season_length
+# def add_season_context_features(df: pd.DataFrame) -> pd.DataFrame:
+#     """Where in the season this round falls — early vs late development."""
+#     season_length = df.groupby("Year")["RoundNumber"].transform("max")
+#     df["SeasonProgress"] = df["RoundNumber"] / season_length
 
-    # Driver's cumulative delta improvement within the season
-    df["DriverSeasonDeltaTrend"] = (
-        df.groupby(["Driver", "Year"])["DeltaToFastest_s"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+#     # Driver's cumulative delta improvement within the season
+#     df["DriverSeasonDeltaTrend"] = (
+#         df.groupby(["Driver", "Year"])["DeltaToFastest_s"]
+#         .transform(lambda x: x.shift(1).expanding().mean())
+#     )
 
-    return df
+#     return df
 
 
 # ── 6. Compound encoding ──────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ FEATURE_COLS = [
     # Circuit history
     "DriverCircuitHistoricalDelta", "DriverCircuitAppearances",
     "TeamCircuitHistoricalDelta",
-    # Season context
-    "SeasonProgress", "DriverSeasonDeltaTrend",
+    # # Season context
+    # "SeasonProgress", "DriverSeasonDeltaTrend",
     # Circuit profile
     "IsStreetCircuit", "Altitude_m",
     # Weather
@@ -192,8 +192,8 @@ if __name__ == "__main__":
     print("Adding circuit history features...")
     df = add_circuit_history_features(df)
 
-    print("Adding season context features...")
-    df = add_season_context_features(df)
+    # print("Adding season context features...")
+    # df = add_season_context_features(df)
 
     print("Adding compound features...")
     df = add_compound_features(df)

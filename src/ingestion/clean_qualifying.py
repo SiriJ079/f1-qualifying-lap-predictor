@@ -73,6 +73,8 @@ def compute_session_deltas(df: pd.DataFrame) -> pd.DataFrame:
 
     # Delta of driver's best to the session fastest (pole/fastest qualifier)
     df["DeltaToSessionFastest_s"] = df["BestLap_s"] - df["SessionFastest_s"]
+    MAX_REASONABLE_DELTA = 5.0  # seconds
+    df = df[df["DeltaToSessionFastest_s"] <= MAX_REASONABLE_DELTA]
 
     return df
 

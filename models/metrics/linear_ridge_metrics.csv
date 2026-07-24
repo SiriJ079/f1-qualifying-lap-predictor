@@ -1,0 +1,2 @@
+Model,MAE,RMSE,MedianAE
+Linear Regression (Ridge),0.3943,0.5559,0.2691
