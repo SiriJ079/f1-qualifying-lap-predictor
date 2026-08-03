@@ -29,6 +29,15 @@ def save_model(model, name: str):
     joblib.dump(model, path)
     print(f"Saved model to {path}")
 
+MODEL_DIR = Path("models/artefacts")
+
+def load_model(name: str):
+    """Load a previously saved model pipeline from models/artefacts/."""
+    path = MODEL_DIR / f"{name}.pkl"
+    if not path.exists():
+        raise FileNotFoundError(f"No saved model found at {path}")
+    return joblib.load(path)
+
 
 def save_metrics(metrics: dict, name: str):
     path = METRICS_DIR / f"{name}_metrics.csv"
