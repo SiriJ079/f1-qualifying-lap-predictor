@@ -10,7 +10,7 @@ df = load_features()
 train, val, test = time_based_split(df)
 feature_cols = get_feature_columns(df)
 
-X_train, y_train = prepare_xy(train, feature_cols)  # ADD THIS LINE
+X_train, y_train = prepare_xy(train, feature_cols) 
 X_test, y_test = prepare_xy(test, feature_cols)
 
 X_test_imputed = pipeline.named_steps["imputer"].transform(X_test)
