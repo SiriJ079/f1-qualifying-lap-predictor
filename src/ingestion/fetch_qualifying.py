@@ -1,6 +1,7 @@
 import fastf1
 import pandas as pd
 import os
+import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
@@ -15,10 +16,10 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 fastf1.Cache.enable_cache(CACHE_DIR)
 
 SEASONS = list(range(2021, 2027))
+REQUEST_DELAY_SECONDS = 3
 
 
 def load_existing_data() -> pd.DataFrame:
-    """Load previously fetched qualifying data, if any."""
     if OUTPUT_PATH.exists():
         existing = pd.read_parquet(OUTPUT_PATH)
         print(f"Loaded existing dataset: {len(existing)} rows across {existing['Year'].nunique()} seasons")
@@ -28,14 +29,12 @@ def load_existing_data() -> pd.DataFrame:
 
 
 def get_already_fetched_rounds(existing: pd.DataFrame) -> set[tuple[int, int]]:
-    """Return the set of (year, round_number) pairs already in the dataset."""
     if existing.empty:
         return set()
     return set(zip(existing["Year"], existing["RoundNumber"]))
 
 
 def fetch_qualifying_session(year: int, round_number: int) -> pd.DataFrame | None:
-    """Download one qualifying session and return it as a DataFrame."""
     try:
         session = fastf1.get_session(year, round_number, "Q")
         session.load(telemetry=False, weather=True, messages=True)
@@ -62,18 +61,28 @@ def fetch_qualifying_session(year: int, round_number: int) -> pd.DataFrame | Non
         return laps
 
     except Exception as e:
-        print(f"  ✗ {year} Round {round_number} failed (likely not yet happened): {e}")
+        print(f"  ✗ {year} Round {round_number} failed: {e}")
+        return None
+
+
+def fetch_season_schedule(year: int):
+    """Isolate schedule-fetch failures so one bad season doesn't kill the whole run."""
+    try:
+        return fastf1.get_event_schedule(year, include_testing=False)
+    except Exception as e:
+        print(f"  ✗ Could not load schedule for {year}: {e}")
         return None
 
 
 def fetch_new_sessions(seasons: list[int], already_fetched: set[tuple[int, int]]) -> pd.DataFrame:
-    """Loop through seasons/rounds, skipping any already fetched, and skip future events."""
     all_laps = []
     now = datetime.now(timezone.utc)
 
     for year in seasons:
         print(f"\n--- Season {year} ---")
-        schedule = fastf1.get_event_schedule(year, include_testing=False)
+        schedule = fetch_season_schedule(year)
+        if schedule is None:
+            continue
 
         for _, event in schedule.iterrows():
             round_num = event["RoundNumber"]
@@ -90,11 +99,12 @@ def fetch_new_sessions(seasons: list[int], already_fetched: set[tuple[int, int]]
             if df is not None:
                 all_laps.append(df)
 
+            time.sleep(REQUEST_DELAY_SECONDS)
+
     return pd.concat(all_laps, ignore_index=True) if all_laps else pd.DataFrame()
 
 
 def merge_and_save(existing: pd.DataFrame, new_data: pd.DataFrame):
-    """Combine existing and newly fetched data, dedupe, and save."""
     if new_data.empty:
         print("\nNo new sessions found — dataset already up to date.")
         return
@@ -114,10 +124,8 @@ if __name__ == "__main__":
 
     try:
         new_data = fetch_new_sessions(SEASONS, already_fetched)
-        if new_data.empty:
-            print("No new sessions found — dataset already up to date.")
-        else:
-            merge_and_save(existing_data, new_data)
     except Exception as e:
-        print(f"Fetch failed, likely no new race this week or a transient FastF1/network issue: {e}")
-        print("Exiting gracefully without modifying the existing dataset.")
+        print(f"Unexpected fatal error during fetch: {e}")
+        new_data = pd.DataFrame()
+
+    merge_and_save(existing_data, new_data)
