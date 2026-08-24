@@ -9,6 +9,8 @@ from pathlib import Path
 
 load_dotenv()
 
+fastf1.ergast.interface.BASE_URL = "https://api.jolpi.ca/ergast/f1"
+
 CACHE_DIR = Path(os.getenv("FASTF1_CACHE_DIR", "./data/raw/fastf1_cache"))
 OUTPUT_DIR = Path("./data/raw")
 OUTPUT_PATH = OUTPUT_DIR / "qualifying_laps_raw.parquet"

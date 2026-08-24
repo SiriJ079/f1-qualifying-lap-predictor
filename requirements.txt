@@ -1,5 +1,5 @@
 # Data & APIs
-fastf1==3.4.0
+fastf1>=3.4.0
 requests==2.31.0
 pandas==2.2.2
 numpy==1.26.4
