@@ -114,6 +114,52 @@ The close alignment between validation MAE (0.412s) and test MAE (0.429s) confir
 - **Rolling features lag real competitive shifts.** Teams with sharp mid-season form changes (e.g. Aston Martin's 2026 decline) are systematically mispredicted since trailing averages are inherently backward-looking.
 - **A small number of large residuals inflate RMSE more than MAE.** Test RMSE (0.645s) rose more than MAE relative to validation, though MedianAE actually improved -- most predictions are highly accurate, with a few hard cases skewing RMSE.
 - **The outlier threshold is a fixed heuristic.** The 5.0-second cutoff for filtering crash/DNF-style laps was chosen by inspecting the data distribution, not derived from a principled statistical method or explicit incident flags in the source data.
+
+### Phase 7: Hyperparameter Tuning & Robustness Checks
+
+Used Optuna to systematically search XGBoost hyperparameters rather than relying on hand-picked values, optimising directly for validation MAE with a time-respecting train/val split (no shuffling, since this is chronological data).
+
+Best parameters were saved to `models/metrics/best_params.json` and loaded into `train_xgboost.py` in place of the original manual values, with a safe fallback to the manual defaults if the tuned file is missing.
+
+**Result:**
+
+| Model | Val MAE | Test MAE |
+|---|---|---|
+| XGBoost (manual params) | 0.412s | 0.429s |
+| XGBoost (Optuna-tuned) | 0.399s | 0.415s |
+
+Tuning produced a small, genuine improvement (roughly 1-3% on both splits), confirming the manual parameters from Phase 6 were already close to optimal. Re-running the Optuna search a second time produced near-identical results (0.400s vs 0.399s val MAE) -- this run-to-run variation is well within normal Bayesian-search noise rather than a real further improvement, so tuning was stopped at that point rather than repeated indefinitely for diminishing returns. This is an important discipline point: hyperparameter tuning should be treated as converged once successive runs stop meaningfully changing the result, since continuing to search and check against the validation or test set repeatedly risks quietly overfitting evaluation decisions to those specific splits.
+
+---
+
+### Phase 8: Explainability & Prediction Intervals
+
+Built `src/models/explain_model.py` to generate SHAP values for the tuned model, giving both a global feature-importance view and the ability to explain any single prediction -- essential for the app's planned "why this prediction" feature.
+
+Also trained two supplementary XGBoost models using quantile regression (10th and 90th percentile) to produce an 80% prediction interval around each point estimate, rather than a falsely precise single number:
+
+**Problems encountered and fixed:**
+
+- **`NameError` for `X_train`/`y_train`** The explainability script initially only loaded the test split (for SHAP), but the quantile interval models needed a training split that was never pulled in. Fixed by extracting `X_train, y_train` via `prepare_xy(train, feature_cols)` alongside the existing test split, and imputing both sets using the already-fitted imputer from the saved pipeline rather than refitting it.
+
+**Result:** The SHAP summary plot confirmed the model relies on sensible, expected signals -- `DriverRollingDelta_10` and `DriverRollingDelta_5` (recent driver form) were by far the strongest predictors, followed by `TeamCircuitHistoricalDelta` and team-level rolling/median deltas. Weather and circuit-context features (wind, humidity, altitude, street circuit flag) contributed at the margins, as expected. This gave confidence the model had learned genuine motorsport relationships rather than spurious patterns.
+
+---
+
+### Phase 9: Backend API
+
+Built a FastAPI service wrapping the trained model, SHAP explainer, and quantile interval models behind a clean set of endpoints, structured as three files:
+
+- **`src/api/schemas.py`** -- Pydantic request/response models for `/predict`, `/compare`, and `/metadata`
+- **`src/api/predictor_service.py`** -- a `PredictorService` class loading all artefacts once at startup (not per-request), building a feature row from each driver/circuit's most recent historical data, and returning a point prediction, an 80% interval, and the top 5 SHAP-ranked features driving that specific prediction
+- **`src/api/main.py`** -- the FastAPI app itself, exposing `/predict`, `/compare`, `/metadata`, and `/health` endpoints with CORS enabled for the future frontend
+
+**Problem encountered and fixed:**
+
+- **`404 Not Found` on initial local run.** Visiting the root URL (`/`) returned a 404, which looked alarming but was actually expected -- no route was ever defined for the bare root path, and the log confirmed `Application startup complete` with no real errors. Fixed by testing the actual defined endpoints (`/docs`, `/health`, `/metadata`) instead, and optionally adding a simple root route (`GET /`) returning a welcome message for convenience during development.
+
+**Result:** All endpoints verified working locally via FastAPI's auto-generated Swagger UI (`/docs`), confirming the model, SHAP explainer, and quantile models all load correctly at startup and return valid predictions end-to-end. The backend is now ready to be connected to a frontend in Phase 10.
+
 ## Setup
 
 ```bash
@@ -132,8 +178,8 @@ pip install -r requirements.txt
 - Completed — Phase 4 (Feature Engineering : Prepping (transforming) data to be ready for an ML Model) 
 - Completed — Phase 5 (Baseline models (driver rolling, circuit history, team median) with evaluation framework) 
 - Completed — Phase 6 (Model Training, Outlier Handling & Evaluation)
-- In Progress — Phase 7 (Tune & stress-testing model)
-<!-- - Completed — Phase 8 (Adding interpretability and uncertainty)
+- Completed — Phase 7 (Tune & stress-testing model)
+- Completed — Phase 8 (Adding interpretability and uncertainty)
 - Completed — Phase 9 (Building back-end API)
-- Completed — Phase 10 (Building front-end (App UI))
+<!-- - Completed — Phase 10 (Building front-end (App UI))
 - Completed — Phase 11 (Test & Deploy App) -->

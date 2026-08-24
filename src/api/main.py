@@ -39,3 +39,7 @@ def compare(request: CompareRequest):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/")
+def root():
+    return {"message": "F1 Qualifying Predictor API is running", "docs": "/docs"}
