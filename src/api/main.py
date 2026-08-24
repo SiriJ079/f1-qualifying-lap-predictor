@@ -29,6 +29,7 @@ def home(request: Request):
         {
             "drivers": metadata["drivers"],
             "circuits": metadata["circuits"],
+            "last_updated": metadata["last_updated"],
         }
     )
 

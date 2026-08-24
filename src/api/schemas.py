@@ -26,3 +26,4 @@ class MetadataResponse(BaseModel):
     drivers: List[str]
     circuits: List[str]
     teams: List[str]
+    last_updated: str

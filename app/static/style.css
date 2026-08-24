@@ -22,6 +22,12 @@ body {
     box-shadow: 0 2px 12px rgba(225,6,0,0.4);
 }
 
+.last-updated {
+    color: #6a6a80;
+    font-size: 0.85rem;
+    margin-top: -0.5rem;
+}
+
 .hero {
     text-align: center;
     padding: 3rem 1rem 1rem;

@@ -1,0 +1,48 @@
+name: Weekly Retrain
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch latest race data
+        run: |
+          python -m src.ingestion.fetch_qualifying
+          python -m src.ingestion.fetch_circuit_metadata
+
+      - name: Clean and rebuild features
+        run: |
+          python -m src.ingestion.clean_qualifying
+          python -m src.features.build_features
+
+      - name: Retrain model
+        run: |
+          python -m src.models.train_xgboost
+          python -m src.models.explain_model
+
+      - name: Commit updated data and model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/raw/qualifying_laps_raw.parquet data/raw/circuit_metadata.parquet
+          git add -f data/processed/qualifying_clean.parquet
+          git add -f data/features/qualifying_features.parquet
+          git add -f models/artefacts/xgboost_v2_tuned.pkl models/artefacts/shap_explainer.pkl models/artefacts/quantile_lower.pkl models/artefacts/quantile_upper.pkl
+          git diff --staged --quiet || git commit -m "Automated retrain: $(date +'%Y-%m-%d')"
+          git push

@@ -6,6 +6,7 @@ from src.models.data_split import load_features
 import joblib
 import shap
 
+
 class PredictorService:
     def __init__(self):
         self.pipeline = load_model("xgboost_v2_tuned")
@@ -17,18 +18,23 @@ class PredictorService:
 
     def get_metadata(self):
         current_season = self.df["Year"].max()
-        current_drivers = (
-            self.df[self.df["Year"] == current_season]["Driver"]
-            .unique()
-        .   tolist()
-    )
+        current_season_df = self.df[self.df["Year"] == current_season]
+
+        current_drivers = current_season_df["Driver"].unique().tolist()
         all_circuits = self.df["EventName"].unique().tolist()
+
+        if "RoundNumber" in current_season_df.columns and not current_season_df.empty:
+            latest_round = int(current_season_df["RoundNumber"].max())
+            last_updated = f"{int(current_season)} season, through round {latest_round}"
+        else:
+            last_updated = f"{int(current_season)} season"
 
         return {
             "drivers": sorted(current_drivers),
             "circuits": sorted(all_circuits),
-            "teams": sorted(self.df[self.df["Year"] == current_season]["Team"].unique().tolist()),
-    }
+            "teams": sorted(current_season_df["Team"].unique().tolist()),
+            "last_updated": last_updated,
+        }
 
     def _build_feature_row(self, driver: str, circuit: str, year: int) -> pd.DataFrame:
         row = self.df[
