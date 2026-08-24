@@ -23,11 +23,14 @@ service = PredictorService()
 @app.get("/")
 def home(request: Request):
     metadata = service.get_metadata()
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "drivers": metadata["drivers"],
-        "circuits": metadata["circuits"],
-    })
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "drivers": metadata["drivers"],
+            "circuits": metadata["circuits"],
+        }
+    )
 
 @app.get("/metadata", response_model=MetadataResponse)
 def get_metadata():
