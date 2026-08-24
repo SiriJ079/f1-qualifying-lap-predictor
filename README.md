@@ -4,6 +4,18 @@ A machine learning model and interactive web application that predicts Formula 1
 qualifying lap times for any driver at any circuit, with driver comparison and
 model explainability.
 
+---
+
+## Live Interactive Predictor App
+
+Link: [f1-qualifying-predictor.onrender.com](https://f1-qualifying-lap-predictor.onrender.com)
+
+*Note: hosted on Render's free tier -- the app may take 30-60 seconds to wake up on first load if it has been idle.*
+
+The live app lets users select one or more current-season drivers, pick any circuit from the historical calendar, and get a predicted qualifying delta with an 80% confidence interval and the top SHAP-ranked features driving that specific prediction -- all served by the FastAPI backend built in Phase 9 and the frontend built in Phase 10.
+
+---
+
 ## Project overview
 
 **Question:** Given a driver, circuit, season context, and expected qualifying
@@ -115,6 +127,8 @@ The close alignment between validation MAE (0.412s) and test MAE (0.429s) confir
 - **A small number of large residuals inflate RMSE more than MAE.** Test RMSE (0.645s) rose more than MAE relative to validation, though MedianAE actually improved -- most predictions are highly accurate, with a few hard cases skewing RMSE.
 - **The outlier threshold is a fixed heuristic.** The 5.0-second cutoff for filtering crash/DNF-style laps was chosen by inspecting the data distribution, not derived from a principled statistical method or explicit incident flags in the source data.
 
+---
+
 ### Phase 7: Hyperparameter Tuning & Robustness Checks
 
 Used Optuna to systematically search XGBoost hyperparameters rather than relying on hand-picked values, optimising directly for validation MAE with a time-respecting train/val split (no shuffling, since this is chronological data).
@@ -160,6 +174,43 @@ Built a FastAPI service wrapping the trained model, SHAP explainer, and quantile
 
 **Result:** All endpoints verified working locally via FastAPI's auto-generated Swagger UI (`/docs`), confirming the model, SHAP explainer, and quantile models all load correctly at startup and return valid predictions end-to-end. The backend is now ready to be connected to a frontend in Phase 10.
 
+---
+
+### Phase 10: Frontend -- Interactive Web App
+
+Built a Jinja2 + Plotly frontend served directly by FastAPI, avoiding the need for a separate JavaScript framework given the project's Python-first stack. Structured across three files: `app/templates/index.html` (driver checkboxes, circuit dropdown, predict button), `app/static/app.js` (fetches `/compare`, renders prediction cards and a Plotly bar chart with error bars), and `app/static/style.css` (dark, F1-inspired theme).
+
+**Problems encountered and fixed:**
+
+- **Multi-driver comparison UX was unusable.** The initial native `<select multiple>` dropdown required Ctrl-click to select multiple drivers and was visually cramped into one corner. Replaced with a checkbox-pill grid (red = selected) for clearer, easier multi-select, and centred the whole control panel with `max-width` + `margin: auto` rather than default corner alignment.
+- **Chart squishing with multiple drivers selected.** `#shap-chart` had no explicit height, so Plotly rendered into a tiny default container that didn't grow with more bars, and the page couldn't scroll to reveal it fully. Fixed by giving the container a fixed `height: 500px` in CSS, passing a matching `height: 500` in the Plotly layout object, adding `{ responsive: true }`, and adding `bargap: 0.3` to stop bars/labels overlapping with 5+ drivers selected.
+- **Stale driver/circuit dropdown filtering.** Metadata initially returned every driver and circuit from the full historical dataset (2018-2026), including retired/inactive drivers. Fixed by filtering drivers to `Year == current_season` only, while deliberately leaving circuits unfiltered by year so future/unraced 2026 rounds (with historical data from prior seasons) remain selectable.
+
+**Result:** A dark-themed, centred, F1-styled interface where users can multi-select current-season drivers via checkbox pills, pick any circuit on the historical calendar, and get back prediction cards plus a readable, properly-sized comparison chart.
+
+---
+
+### Phase 11: Testing
+
+Added two new test files -- `tests/test_predictor_service.py` for core prediction logic in isolation, and `tests/test_api.py` using FastAPI's `TestClient` for endpoint-level checks -- bringing the full suite to 21 tests across ingestion, features, models, service logic, and API behaviour.
+
+**Result:** All 21 tests passing locally, confirming the full pipeline -- from raw ingestion through the deployed API -- behaves correctly end-to-end before moving to deployment.
+
+---
+
+### Phase 12: CI/CD & Deployment
+
+Set up automated testing via GitHub Actions and deployed the app publicly on Render, closing the loop from local development to a shareable, live product.
+
+Deployed to Render as a free-tier web service (build command `pip install -r requirements.txt`, start command `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`), with model artefacts and feature data force-added to the repo (via `git add -f`) so the deployed app has everything it needs without depending on data that `.gitignore` normally excludes.
+
+**Problems encountered and fixed:**
+
+- **CI failing with 4 test failures despite passing locally.** GitHub Actions starts from a bare checkout with none of the locally-accumulated raw/intermediate data files. Fixed by (a) adding `@pytest.mark.skipif(os.getenv("CI") == "true", ...)` to ingestion tests checking for raw/intermediate files that are deliberately not committed to the repo, and (b) fixing a genuinely outdated test (`test_xgboost_model_saved`) that was still checking for `xgboost_v1.pkl` instead of the tuned `xgboost_v2_tuned.pkl` model from Phase 7, then force-adding the actual tuned model and SHAP/quantile artefacts so both CI and the deployed app have what they need.
+
+**Result:** A green CI pipeline running automatically on every push, and a live, publicly accessible web app on Render -- taking the project from a local notebook-driven pipeline to a fully deployed, tested, end-to-end product.
+
+
 ## Setup
 
 ```bash
@@ -181,5 +232,6 @@ pip install -r requirements.txt
 - Completed — Phase 7 (Tune & stress-testing model)
 - Completed — Phase 8 (Adding interpretability and uncertainty)
 - Completed — Phase 9 (Building back-end API)
-<!-- - Completed — Phase 10 (Building front-end (App UI))
-- Completed — Phase 11 (Test & Deploy App) -->
+- Completed — Phase 10 (Building front-end (App UI))
+- Completed — Phase 11 (Testing) 
+- Completed — Phase 12 (Web App Deployment) 
