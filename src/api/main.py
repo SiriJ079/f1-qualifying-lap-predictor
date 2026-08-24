@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 from src.api.schemas import PredictionRequest, PredictionResponse, CompareRequest, CompareResponse, MetadataResponse
 from src.api.predictor_service import PredictorService
 
-app = FastAPI(title="F1 Qualifying Predictor API")
+app = FastAPI(title="F1 Qualifying Predictor")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,7 +15,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
 service = PredictorService()
+
+@app.get("/")
+def home(request: Request):
+    metadata = service.get_metadata()
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "drivers": metadata["drivers"],
+        "circuits": metadata["circuits"],
+    })
 
 @app.get("/metadata", response_model=MetadataResponse)
 def get_metadata():
@@ -39,7 +53,3 @@ def compare(request: CompareRequest):
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.get("/")
-def root():
-    return {"message": "F1 Qualifying Predictor API is running", "docs": "/docs"}

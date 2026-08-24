@@ -16,11 +16,19 @@ class PredictorService:
         self.feature_cols = get_feature_columns(self.df)
 
     def get_metadata(self):
+        current_season = self.df["Year"].max()
+        current_drivers = (
+            self.df[self.df["Year"] == current_season]["Driver"]
+            .unique()
+        .   tolist()
+    )
+        all_circuits = self.df["EventName"].unique().tolist()
+
         return {
-            "drivers": sorted(self.df["Driver"].unique().tolist()),
-            "circuits": sorted(self.df["EventName"].unique().tolist()),
-            "teams": sorted(self.df["Team"].unique().tolist()),
-        }
+            "drivers": sorted(current_drivers),
+            "circuits": sorted(all_circuits),
+            "teams": sorted(self.df[self.df["Year"] == current_season]["Team"].unique().tolist()),
+    }
 
     def _build_feature_row(self, driver: str, circuit: str, year: int) -> pd.DataFrame:
         row = self.df[

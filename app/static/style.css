@@ -1,0 +1,152 @@
+* { box-sizing: border-box; }
+
+html, body {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+}
+
+body {
+    font-family: 'Titillium Web', 'Segoe UI', sans-serif;
+    background: #0d0d14;
+    color: white;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.navbar {
+    background: linear-gradient(90deg, #e10600, #b30500);
+    padding: 1.2rem 2rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(225,6,0,0.4);
+}
+
+.hero {
+    text-align: center;
+    padding: 3rem 1rem 1rem;
+}
+
+.hero h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.hero p { color: #9a9ab0; }
+
+.control-panel {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: #1a1a26;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.control-group {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-weight: 600;
+    color: #d0d0e0;
+    font-size: 0.95rem;
+}
+
+.checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 0.75rem;
+    background: #12121c;
+    border-radius: 10px;
+}
+
+.checkbox-pill {
+    position: relative;
+    cursor: pointer;
+}
+
+.checkbox-pill input { display: none; }
+
+.checkbox-pill span {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    background: #23233a;
+    color: #b0b0c8;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    border: 1px solid #2f2f48;
+}
+
+.checkbox-pill input:checked + span {
+    background: #e10600;
+    color: white;
+    border-color: #e10600;
+}
+
+.checkbox-pill:hover span { border-color: #e10600; }
+
+select#circuit-select {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #2f2f48;
+    background: #12121c;
+    color: white;
+    font-size: 1rem;
+    width: 100%;
+}
+
+button#predict-btn {
+    background: #e10600;
+    color: white;
+    border: none;
+    padding: 0.9rem 3rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.2s ease;
+}
+
+button#predict-btn:hover { background: #ff1a10; transform: translateY(-2px); }
+button#predict-btn:active { transform: translateY(0); }
+
+.results-grid {
+    max-width: 900px;
+    margin: 2rem auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.prediction-card {
+    background: #1a1a26;
+    padding: 1.5rem;
+    border-radius: 12px;
+    min-width: 160px;
+    text-align: center;
+    border-top: 4px solid #e10600;
+}
+
+.prediction-card h3 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+.prediction-card p { margin: 0; color: #9a9ab0; font-size: 0.95rem; }
+
+#shap-chart {
+    max-width: 900px;
+    margin: 2rem auto 4rem;
+    background: #1a1a26;
+    border-radius: 16px;
+    padding: 1rem;
+    height: 500px;
+}

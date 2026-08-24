@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+    <h1>Predict Any Driver's Qualifying Pace</h1>
+    <p>Select one or more drivers and a circuit to compare predicted lap deltas</p>
+</div>
+
+<div class="control-panel">
+    <div class="control-group">
+        <label>Drivers</label>
+        <div id="driver-checkboxes" class="checkbox-grid">
+            {% for d in drivers %}
+            <label class="checkbox-pill">
+                <input type="checkbox" name="driver" value="{{ d }}">
+                <span>{{ d }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label for="circuit-select">Circuit</label>
+        <select id="circuit-select">
+            {% for c in circuits %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+    </div>
+
+    <button id="predict-btn">Predict</button>
+</div>
+
+<div id="results-panel" class="results-grid"></div>
+<div id="shap-chart"></div>
+
+<script src="{{ url_for('static', path='/app.js') }}"></script>
+{% endblock %}
