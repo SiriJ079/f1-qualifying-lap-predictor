@@ -29,9 +29,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: data/raw/fastf1_cache
-          key: fastf1-cache-${{ hashFiles('src/ingestion/fetch_qualifying.py') }}
+          key: fastf1-cache-v2-${{ hashFiles('src/ingestion/fetch_qualifying.py') }}
           restore-keys: |
-            fastf1-cache-
+            fastf1-cache-v2-
 
       - name: Fetch latest race data
         run: |
