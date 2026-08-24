@@ -3,8 +3,8 @@ import pandas as pd
 
 
 def test_xgboost_model_saved():
-    path = Path("models/artefacts/xgboost_v1.pkl")
-    assert path.exists(), "XGBoost model artefact not found — run train_xgboost.py first"
+    from pathlib import Path
+    assert Path("models/artefacts/xgboost_v2_tuned.pkl").exists(), "XGBoost tuned model artefact not found — run train_xgboost.py first"
 
 
 def test_xgboost_beats_baseline():
