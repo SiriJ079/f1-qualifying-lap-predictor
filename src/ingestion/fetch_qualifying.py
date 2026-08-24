@@ -7,9 +7,11 @@ from pathlib import Path
 
 load_dotenv()
 
-CACHE_DIR = os.getenv("FASTF1_CACHE_DIR", "./data/raw/fastf1_cache")
+CACHE_DIR = Path(os.getenv("FASTF1_CACHE_DIR", "./data/raw/fastf1_cache"))
 OUTPUT_DIR = Path("./data/raw")
 OUTPUT_PATH = OUTPUT_DIR / "qualifying_laps_raw.parquet"
+
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 fastf1.Cache.enable_cache(CACHE_DIR)
 
 SEASONS = list(range(2021, 2027))

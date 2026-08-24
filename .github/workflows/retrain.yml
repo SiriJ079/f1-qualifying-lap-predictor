@@ -21,6 +21,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create FastF1 cache directory
+        run: mkdir -p data/raw/fastf1_cache
+
+      - name: Cache FastF1 data
+        uses: actions/cache@v4
+        with:
+          path: data/raw/fastf1_cache
+          key: fastf1-cache-${{ hashFiles('src/ingestion/fetch_qualifying.py') }}
+          restore-keys: |
+            fastf1-cache-
+
       - name: Fetch latest race data
         run: |
           python -m src.ingestion.fetch_qualifying
