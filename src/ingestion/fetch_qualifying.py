@@ -1,4 +1,5 @@
 import fastf1
+from fastf1 import RateLimitExceededError
 import pandas as pd
 import os
 import time
@@ -25,11 +26,12 @@ MAX_RETRIES = 4
 
 
 def with_retries(func, *args, max_retries=MAX_RETRIES, **kwargs):
-    """Run func with exponential backoff retries on failure."""
     last_error = None
     for attempt in range(1, max_retries + 1):
         try:
             return func(*args, **kwargs)
+        except RateLimitExceededError:
+            raise
         except Exception as e:
             last_error = e
             if attempt == max_retries:
@@ -41,7 +43,6 @@ def with_retries(func, *args, max_retries=MAX_RETRIES, **kwargs):
 
 
 def load_existing_data() -> pd.DataFrame:
-    """Load previously fetched qualifying data, if any."""
     if OUTPUT_PATH.exists():
         existing = pd.read_parquet(OUTPUT_PATH)
         print(f"Loaded existing dataset: {len(existing)} rows across {existing['Year'].nunique()} seasons")
@@ -51,23 +52,22 @@ def load_existing_data() -> pd.DataFrame:
 
 
 def get_already_fetched_rounds(existing: pd.DataFrame) -> set[tuple[int, int]]:
-    """Return the set of (year, round_number) pairs already in the dataset."""
     if existing.empty:
         return set()
     return set(zip(existing["Year"], existing["RoundNumber"]))
 
 
 def fetch_season_schedule(year: int):
-    """Fetch a season's event schedule, isolating failures so other seasons still run."""
     try:
         return with_retries(fastf1.get_event_schedule, year, include_testing=False)
+    except RateLimitExceededError:
+        raise
     except Exception as e:
         print(f"  ✗ Could not load schedule for {year} after retries: {e}")
         return None
 
 
 def fetch_qualifying_session(year: int, round_number: int) -> pd.DataFrame | None:
-    """Download one qualifying session and return it as a DataFrame, with retries."""
     try:
         def _load():
             session = fastf1.get_session(year, round_number, "Q")
@@ -97,19 +97,25 @@ def fetch_qualifying_session(year: int, round_number: int) -> pd.DataFrame | Non
         print(f"  ✓ {year} Round {round_number} — {session.event['EventName']} ({len(laps)} laps)")
         return laps
 
+    except RateLimitExceededError:
+        raise
     except Exception as e:
         print(f"  ✗ {year} Round {round_number} failed after retries: {e}")
         return None
 
 
 def fetch_new_sessions(seasons: list[int], already_fetched: set[tuple[int, int]]) -> pd.DataFrame:
-    """Loop through seasons/rounds, skipping any already fetched, and skip future events."""
     all_laps = []
     now = datetime.now(timezone.utc)
 
     for year in seasons:
         print(f"\n--- Season {year} ---")
-        schedule = fetch_season_schedule(year)
+        try:
+            schedule = fetch_season_schedule(year)
+        except RateLimitExceededError:
+            print(f"\n⚠ Hit FastF1 rate limit (500 calls/h) while loading {year} schedule. Stopping early — will resume next run.")
+            return pd.concat(all_laps, ignore_index=True) if all_laps else pd.DataFrame()
+
         if schedule is None:
             continue
 
@@ -124,9 +130,13 @@ def fetch_new_sessions(seasons: list[int], already_fetched: set[tuple[int, int]]
                 print(f"  – {year} Round {round_num} — {event['EventName']} hasn't happened yet, skipping")
                 continue
 
-            df = fetch_qualifying_session(year, round_num)
-            if df is not None:
-                all_laps.append(df)
+            try:
+                df = fetch_qualifying_session(year, round_num)
+                if df is not None:
+                    all_laps.append(df)
+            except RateLimitExceededError:
+                print(f"\n⚠ Hit FastF1 rate limit (500 calls/h) at {year} Round {round_num}. Stopping early — will resume next run.")
+                return pd.concat(all_laps, ignore_index=True) if all_laps else pd.DataFrame()
 
             time.sleep(REQUEST_DELAY_SECONDS)
 
@@ -136,7 +146,6 @@ def fetch_new_sessions(seasons: list[int], already_fetched: set[tuple[int, int]]
 
 
 def merge_and_save(existing: pd.DataFrame, new_data: pd.DataFrame):
-    """Combine existing and newly fetched data, dedupe, and save."""
     if new_data.empty:
         print("\nNo new sessions found — dataset already up to date.")
         return
