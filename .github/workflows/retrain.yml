@@ -37,6 +37,7 @@ jobs:
         run: |
           python -m src.ingestion.fetch_qualifying
           python -m src.ingestion.fetch_circuit_metadata
+          python -m src.ingestion.add_manual_circuits
 
       - name: Clean and rebuild features
         run: |
